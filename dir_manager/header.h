@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#define WORKING_DIRECTORY "check"								// 프로그램이 계속 감시할 directory
+#define PROMPT_STRING "$ "
 #define DAEMON_PID_FILE "../.daemonPid"							// daemon process의 pid 저장할 파일 경로
 
 #define NAME_LEN 20												// 파일명 최대 길이

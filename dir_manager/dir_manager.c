@@ -14,6 +14,7 @@ extern void print_size_tree(FileNode *root, char path[PATH_LEN], int depth);
 extern void make_tree(FileNode *node, struct dirent **fileList, int cnt, char *path);
 extern void free_tree(FileNode *root);
 
+char targetPath[PATH_LEN];
 char trashFilesPath[PATH_LEN] = "../trash/files/";
 char trashInfoPath[PATH_LEN] = "../trash/info/";
 
@@ -174,6 +175,7 @@ void do_delete(char filePath[PATH_LEN], bool iOption, bool rOption)
 		printf("delete [y/n]? ");
 		char c[10];
 		scanf("%[^\n]", c);
+		getchar();
 		if(c[0] == 'n' || c[0] == 'N')									//n일 경우 종료
 			return;
 		else if(c[0] != 'y' && c[0] != 'Y')								//y가 아닐 경우 종료
@@ -305,7 +307,7 @@ void cmd_size(char cmdArgv[ARGV_MAX][NAME_LEN])
 	chdir("..");							//check directory에서 현재 directory로 cd
 	if(access(path, F_OK) < 0){				//실제 존재하는 file인지 확인
 		fprintf(stderr, "There is no '%s'.\n", path);
-		chdir(WORKING_DIRECTORY);			//check directory로 cd
+		chdir(targetPath);			//check directory로 cd
 		return;
 	}
 	FileNode *root = (FileNode *)malloc(sizeof(FileNode) * 1);
@@ -315,7 +317,7 @@ void cmd_size(char cmdArgv[ARGV_MAX][NAME_LEN])
 	else									//dOption 아닐 경우 root 정보만 출력
 		printf("%ld\t\t./%s\n", root->size, path);
 	free_tree(root);
-	chdir(WORKING_DIRECTORY);				//check directory로 cd
+	chdir(targetPath);				//check directory로 cd
 	
 	return;
 }
@@ -446,7 +448,7 @@ void cmd_recover(char cmdArgv[ARGV_MAX][NAME_LEN])
 			strcpy(dTimeList[i-2], buf+4) ;					//buf에서 D : 제거 후 dTimeList에 복사
 		}
 		chdir("../..");
-		chdir(WORKING_DIRECTORY);	//check로 cd
+		chdir(targetPath);	//check로 cd
 		fileCnt -= 2;
 		for(int i = 0; i < fileCnt-1; i++){		//dTime 기준으로 bubble sort
 			for(int j = 0; j < fileCnt-1-i; j++){
@@ -486,7 +488,8 @@ void cmd_recover(char cmdArgv[ARGV_MAX][NAME_LEN])
 void cmd_tree(void)
 {
 	chdir("./..");					//부모 디렉터리로 이동
-	char path[PATH_LEN] = WORKING_DIRECTORY;
+	char path[PATH_LEN];
+	strcpy(path, targetPath);
 	FileNode *root = (FileNode *)malloc(sizeof(FileNode) * 1);
 	make_tree(root, NULL, -1, path);//Tree 생성
 	bool pipe[MAX_DEPTH];
@@ -625,7 +628,7 @@ void execute_command(char *command)
 //명령 prompt 출력 및 명령어 입력 / 실행 함수
 void prompt(void)
 {
-	char *promptStr = "$ ";
+	char *promptStr = PROMPT_STRING;
 	char command[CMD_BUFFER];
 	while(true){	//명령 prompt 반복 출력
 		fputs(promptStr, stdout);
@@ -635,19 +638,26 @@ void prompt(void)
 	return;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
+	if(argc != 2){
+		fprintf(stderr, "Usage\t: %s [TARGET_DIRECTORY_PATH]\n", argv[0]);
+		exit(1);
+	}
 	//trash directory 생성
 	mkdir("trash", 0755);
 	mkdir("trash/files", 0755);
 	mkdir("trash/info", 0755);
+
 	signal(SIGCHLD, sig_child_handler);	//자식 process 종료 시의 handler 등록
-	char dirName[NAME_LEN] = WORKING_DIRECTORY;
+
+	strcpy(targetPath, argv[1]);
+	//check directory 생성, 이미 있을 경우 생성X
+	mkdir(targetPath, 0755);
+	chdir(targetPath);	//cheeck directory로 이동
+
 	//daemon process 수행용 자식 process 생성
 	pid_t pid;
-	//check directory 생성, 이미 있을 경우 생성X
-	mkdir(dirName, 0755);
-	chdir(dirName);	//cheeck directory로 이동
 	if((pid = fork()) < 0){
 		fprintf(stderr, "daemon start error\n");
 		exit(1);

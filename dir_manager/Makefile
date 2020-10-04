@@ -12,4 +12,3 @@ time.o : time.c header.h
 
 clean :
 	rm -rf *.o log.txt check trash
-	mkdir check
