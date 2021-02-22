@@ -11,4 +11,4 @@ time.o : time.c header.h
 	gcc -c time.c
 
 clean :
-	rm -rf *.o log.txt check trash
+	rm -rf *.o log.txt check trash dir_manager
