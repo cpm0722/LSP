@@ -3,3 +3,6 @@ shell: shell.o
 
 shell.o: shell.c
 	gcc -c shell.c -g
+
+clean:
+	rm shell.o shell
